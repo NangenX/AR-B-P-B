@@ -37,6 +37,9 @@ echo "你选择了添加用户"
 echo ""
 read -p "输入用户名： " uname
 uport=`head -200 /dev/urandom | cksum | awk -F" " '{ print $2 }'`
+if [[ $uname == "" ]];then
+	bash /usr/local/SSR-Bash-Python/user.sh || exit 0
+fi
 read -p "输入密码： " upass
 um1="none"
 ux1="auth_chain_a"
@@ -84,13 +87,11 @@ else
 	python mujson_mgr.py -a -u $uname -p $uport -k $upass -m $um1 -O $ux1 -o $uo1 -t $ut
 fi
 
-SSRPID=$(ps -ef|grep 'python server.py m' |grep -v grep |awk '{print $2}')
+SSRPID=$(ps -ef | grep 'server.py m' | grep -v grep | awk '{print $2}')
 if [[ $SSRPID == "" ]]; then
-	
 	if [[ ${OS} =~ ^Ubuntu$|^Debian$ ]];then
 		iptables-restore < /etc/iptables.up.rules
 	fi
-
     bash /usr/local/shadowsocksr/logrun.sh
 	echo "ShadowsocksR服务器已启动"
 fi
@@ -107,4 +108,5 @@ echo "加密方法: $um1"
 echo "协议: $ux1"
 echo "混淆方式: $uo1"
 echo "流量: $ut GB"
+echo "允许连接数: 不限"
 echo "===================="

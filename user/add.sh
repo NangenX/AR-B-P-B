@@ -37,6 +37,9 @@ fi
 echo "你选择了添加用户"
 echo ""
 read -p "输入用户名： " uname
+if [[ $uname == "" ]]; then
+	bash /usr/local/SSR-Bash-Python/user.sh || exit 0
+fi
 read -p "输入端口： " uport
 read -p "输入密码： " upass
 echo ""
@@ -88,7 +91,18 @@ if [[ $ux == 2 ]];then
 	done
 fi
 
-
+if [[ $ux =~ ^[2,3,4,6,7,8,9]$ ]]; then
+	if [[ ! $ifprotocolcompatible == "y" ]]; then
+		while :; do echo 
+			read -p "请输入连接数限制(建议最少 2个): " uparam
+			if [[ ! $uparam =~ ^(-?|\+?)[0-9]+(\.?[0-9]+)?$ ]]; then
+				echo "输入错误! 请输入正确的数字!"
+			else
+				break
+			fi
+		done
+	fi
+fi
 
 echo "混淆方式"
 echo '1.plain'
@@ -248,19 +262,26 @@ echo "用户添加成功！用户信息如下："
 cd /usr/local/shadowsocksr
 
 if [[ $iflimitspeed == y ]]; then
-	python mujson_mgr.py -a -u $uname -p $uport -k $upass -m $um1 -O $ux1 -o $uo1 -t $ut -S $us
+	if [[ ! "$uparam" == "" ]]; then
+		python mujson_mgr.py -a -u $uname -p $uport -k $upass -m $um1 -O $ux1 -o $uo1 -t $ut -S $us -G $uparam
+	else
+		python mujson_mgr.py -a -u $uname -p $uport -k $upass -m $um1 -O $ux1 -o $uo1 -t $ut -S $us
+		uparam="无限"
+	fi
 else
-	python mujson_mgr.py -a -u $uname -p $uport -k $upass -m $um1 -O $ux1 -o $uo1 -t $ut
+	if [[ ! "$uparam" == "" ]]; then
+		python mujson_mgr.py -a -u $uname -p $uport -k $upass -m $um1 -O $ux1 -o $uo1 -t $ut -G $uparam
+	else
+		python mujson_mgr.py -a -u $uname -p $uport -k $upass -m $um1 -O $ux1 -o $uo1 -t $ut
+		uparam="无限"
+	fi
 fi
 
-
-SSRPID=$(ps -ef|grep 'python server.py m' |grep -v grep |awk '{print $2}')
-if [[ $SSRPID == "" ]]; then
-	
+SSRPID=$(ps -ef | grep 'server.py m' | grep -v grep | awk '{print $2}')
+if [[ -z ${SSRPID} ]];then 
 	if [[ ${OS} =~ ^Ubuntu$|^Debian$ ]];then
 		iptables-restore < /etc/iptables.up.rules
 	fi
-
     bash /usr/local/shadowsocksr/logrun.sh
 	echo "ShadowsocksR服务器已启动"
 fi
@@ -276,4 +297,5 @@ echo "加密方法: $um1"
 echo "协议: $ux1"
 echo "混淆方式: $uo1"
 echo "流量: $ut GB"
+echo "允许连接数: $uparam"
 echo "===================="
